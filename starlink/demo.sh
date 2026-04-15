@@ -36,7 +36,7 @@ for i in {1..30}; do
 done
 
 # Seed the database
-echo "→ Seeding 120 demo users..."
+echo "→ Seeding 25 demo users..."
 SEED_RESULT=$(curl -s -X POST http://localhost:3001/api/seed)
 USER_COUNT=$(echo $SEED_RESULT | grep -o '"users":[0-9]*' | grep -o '[0-9]*' | head -1)
 CONN_COUNT=$(echo $SEED_RESULT | grep -o '"connections":[0-9]*' | grep -o '[0-9]*' | head -1)

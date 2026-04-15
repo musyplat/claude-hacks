@@ -98,7 +98,7 @@ function pickRandomInt(min, max) {
 export function generateSeedUsers() {
   const users = [];
 
-  for (let i = 0; i < 120; i++) {
+  for (let i = 0; i < 25; i++) {
     const name = NAMES[i % NAMES.length] + (i >= NAMES.length ? ` ${Math.floor(i / NAMES.length) + 1}` : '');
     const pos = randomSpherePoint(400);
     const likesCount = pickRandomInt(2, 5);
