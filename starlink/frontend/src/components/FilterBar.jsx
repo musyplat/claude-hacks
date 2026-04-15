@@ -11,6 +11,8 @@ export default function FilterBar() {
   const filterMode = useStore(s => s.filterMode)
   const setFilter = useStore(s => s.setFilter)
   const setShowCreateForm = useStore(s => s.setShowCreateForm)
+  const setShowSkillExchange = useStore(s => s.setShowSkillExchange)
+  const showSkillExchange = useStore(s => s.showSkillExchange)
 
   return (
     <div
@@ -110,6 +112,45 @@ export default function FilterBar() {
         <LegendItem color="#ff8a65" label="Dislike" />
         <LegendItem color="#ffd54f" label="Skill" />
       </div>
+
+      {/* Skill Matches button */}
+      <button
+        onClick={() => setShowSkillExchange(!showSkillExchange)}
+        style={{
+          padding: '10px 18px',
+          background: showSkillExchange
+            ? 'linear-gradient(135deg, rgba(255,213,79,0.3), rgba(124,77,255,0.3))'
+            : 'linear-gradient(135deg, rgba(255,213,79,0.15), rgba(124,77,255,0.15))',
+          border: showSkillExchange
+            ? '1px solid rgba(255,213,79,0.6)'
+            : '1px solid rgba(255,213,79,0.25)',
+          borderRadius: 10,
+          color: '#ffd54f',
+          fontSize: 13,
+          fontWeight: 600,
+          fontFamily: 'Space Grotesk, sans-serif',
+          cursor: 'pointer',
+          backdropFilter: 'blur(8px)',
+          transition: 'all 0.15s ease',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8
+        }}
+        onMouseEnter={e => {
+          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,213,79,0.3), rgba(124,77,255,0.3))'
+          e.currentTarget.style.transform = 'translateY(-1px)'
+          e.currentTarget.style.boxShadow = '0 4px 20px rgba(255,213,79,0.25)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.background = showSkillExchange
+            ? 'linear-gradient(135deg, rgba(255,213,79,0.3), rgba(124,77,255,0.3))'
+            : 'linear-gradient(135deg, rgba(255,213,79,0.15), rgba(124,77,255,0.15))'
+          e.currentTarget.style.transform = 'translateY(0)'
+          e.currentTarget.style.boxShadow = 'none'
+        }}
+      >
+        ⚡ Skill Matches
+      </button>
 
       {/* Add star button */}
       <button

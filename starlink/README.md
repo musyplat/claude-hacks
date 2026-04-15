@@ -8,7 +8,7 @@ A campus connection platform that reveals hidden connections between people thro
 bash demo.sh
 ```
 
-This installs dependencies, seeds 120 demo users, starts both servers, and opens the browser.
+This installs dependencies, seeds 25 demo users, starts both servers, and opens the browser.
 
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:3001
