@@ -9,6 +9,7 @@ import usersRouter from './routes/users.js';
 import connectionsRouter from './routes/connections.js';
 import exchangesRouter from './routes/exchanges.js';
 import statsRouter from './routes/stats.js';
+import cohortsRouter from './routes/cohorts.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -32,6 +33,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/connections', connectionsRouter);
 app.use('/api/exchanges', exchangesRouter);
 app.use('/api/stats', statsRouter);
+app.use('/api/cohorts', cohortsRouter);
 
 // POST /api/seed — seed the database with demo data
 app.post('/api/seed', async (req, res) => {

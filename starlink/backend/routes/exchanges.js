@@ -11,6 +11,7 @@ const router = Router();
 
 const VALID_STATUSES = ['pending', 'accepted', 'declined', 'completed', 'cancelled'];
 const RATE_LIMIT_PER_DAY = 5;
+const BLOCKED_KEYWORDS = ['therapy', 'legal advice', 'medical advice', 'psychiatric', 'counseling'];
 
 function stripHTML(str) {
   if (typeof str !== 'string') return '';
@@ -30,6 +31,14 @@ router.post('/', (req, res) => {
 
     if (proposer_id === receiver_id) {
       return res.status(400).json({ error: 'proposer and receiver must be different users' });
+    }
+
+    const exchangeFields = [String(proposer_gives), String(receiver_gives)].join(' ').toLowerCase();
+    const hasBlockedKeyword = BLOCKED_KEYWORDS.some(kw => exchangeFields.includes(kw));
+    if (hasBlockedKeyword) {
+      return res.status(400).json({
+        error: 'This type of exchange falls outside peer collaboration. For professional support, contact UHS at uhs.wisc.edu',
+      });
     }
 
     const proposer = getUserById(proposer_id);
@@ -63,7 +72,10 @@ router.post('/', (req, res) => {
       created_at: new Date().toISOString(),
     });
 
-    res.status(201).json(exchange);
+    res.status(201).json({
+      ...exchange,
+      meeting_suggestion: 'Memorial Union Terrace or Union South — safe, public, easy to find',
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -56,6 +56,22 @@ db.exec(`
     rating_receiver TEXT,
     created_at TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS cohorts (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    access_code TEXT UNIQUE NOT NULL,
+    organizer_name TEXT,
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS cohort_members (
+    cohort_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    joined_at TEXT NOT NULL,
+    PRIMARY KEY (cohort_id, user_id)
+  );
 `);
 
 // --- User helpers ---
@@ -303,12 +319,72 @@ export function deleteAllDemoData() {
   const demoUsers = db.prepare('SELECT id FROM users WHERE is_demo = 1').all();
   const ids = demoUsers.map(u => u.id);
 
-  if (ids.length === 0) return;
+  if (ids.length > 0) {
+    const placeholders = ids.map(() => '?').join(', ');
+    db.prepare(`DELETE FROM cohort_members WHERE user_id IN (${placeholders})`).run(...ids);
+    db.prepare(`DELETE FROM connections WHERE user_a_id IN (${placeholders}) OR user_b_id IN (${placeholders})`).run(...ids, ...ids);
+    db.prepare(`DELETE FROM users WHERE id IN (${placeholders})`).run(...ids);
+  }
 
-  const placeholders = ids.map(() => '?').join(', ');
+  // Also clear demo cohorts so they can be re-seeded cleanly
+  db.prepare(`DELETE FROM cohorts WHERE access_code IN ('HACK25', 'CS540S', 'SELL3F')`).run();
+}
 
-  db.prepare(`DELETE FROM connections WHERE user_a_id IN (${placeholders}) OR user_b_id IN (${placeholders})`).run(...ids, ...ids);
-  db.prepare(`DELETE FROM users WHERE id IN (${placeholders})`).run(...ids);
+// --- Cohort helpers ---
+
+export function getCohorts() {
+  return db.prepare(`
+    SELECT c.*, COUNT(cm.user_id) as member_count
+    FROM cohorts c
+    LEFT JOIN cohort_members cm ON c.id = cm.cohort_id
+    GROUP BY c.id
+    ORDER BY c.created_at DESC
+  `).all();
+}
+
+export function getCohortById(id) {
+  return db.prepare('SELECT * FROM cohorts WHERE id = ?').get(id);
+}
+
+export function getCohortByCode(code) {
+  return db.prepare('SELECT * FROM cohorts WHERE access_code = ?').get(code);
+}
+
+export function createCohort(data) {
+  db.prepare(`
+    INSERT INTO cohorts (id, name, description, access_code, organizer_name, created_at)
+    VALUES (@id, @name, @description, @access_code, @organizer_name, @created_at)
+  `).run(data);
+  return getCohortById(data.id);
+}
+
+export function addCohortMember(cohortId, userId) {
+  db.prepare(`
+    INSERT OR IGNORE INTO cohort_members (cohort_id, user_id, joined_at)
+    VALUES (?, ?, ?)
+  `).run(cohortId, userId, new Date().toISOString());
+}
+
+export function getCohortMembers(cohortId) {
+  const rows = db.prepare(`
+    SELECT u.*
+    FROM users u
+    JOIN cohort_members cm ON u.id = cm.user_id
+    WHERE cm.cohort_id = ?
+    ORDER BY cm.joined_at ASC
+  `).all(cohortId);
+  return rows.map(parseUserJSON);
+}
+
+export function getCohortConnections(cohortId) {
+  const rows = db.prepare(`
+    SELECT c.*
+    FROM connections c
+    WHERE c.user_a_id IN (SELECT user_id FROM cohort_members WHERE cohort_id = ?)
+      AND c.user_b_id IN (SELECT user_id FROM cohort_members WHERE cohort_id = ?)
+    ORDER BY c.score DESC
+  `).all(cohortId, cohortId);
+  return rows.map(parseConnectionJSON);
 }
 
 export default db;

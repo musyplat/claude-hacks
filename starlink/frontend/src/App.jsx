@@ -8,27 +8,33 @@ import StatsOverlay from './components/StatsOverlay.jsx'
 import FilterBar from './components/FilterBar.jsx'
 import CreateStar from './components/CreateStar.jsx'
 import SkillExchange from './components/SkillExchange.jsx'
+import CohortGate from './components/CohortGate.jsx'
 
 export default function App() {
   const [showMap, setShowMap] = useState(false)
+  const [showCohortGate, setShowCohortGate] = useState(true)
   const [openCreateOnMap, setOpenCreateOnMap] = useState(false)
-  const { loadData, users, isLoading, showCreateForm, setShowCreateForm, showSkillExchange } = useStore()
+  const { loadData, users, isLoading, showCreateForm, setShowCreateForm, showSkillExchange, setCohort } = useStore()
 
-  useEffect(() => {
-    const init = async () => {
-      await loadData()
-      const currentUsers = useStore.getState().users
-      if (!currentUsers || currentUsers.length === 0) {
-        try {
-          await seedDatabase()
-          await loadData()
-        } catch (err) {
-          console.error('Seed failed:', err)
-        }
+  // Initial seed check — runs after cohort is selected and data is loaded
+  const initData = async (cohortId) => {
+    await loadData(cohortId)
+    const currentUsers = useStore.getState().users
+    if (!currentUsers || currentUsers.length === 0) {
+      try {
+        await seedDatabase()
+        await loadData(cohortId)
+      } catch (err) {
+        console.error('Seed failed:', err)
       }
     }
-    init()
-  }, [])
+  }
+
+  const handleSelectCohort = async (cohort) => {
+    setCohort(cohort)
+    setShowCohortGate(false)
+    await initData(cohort.id)
+  }
 
   const handleEnterMap = () => {
     setShowMap(true)
@@ -38,6 +44,10 @@ export default function App() {
     setShowMap(true)
     setOpenCreateOnMap(true)
     setShowCreateForm(true)
+  }
+
+  if (showCohortGate) {
+    return <CohortGate onSelectCohort={handleSelectCohort} />
   }
 
   if (!showMap) {

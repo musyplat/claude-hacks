@@ -151,5 +151,51 @@ export async function seedDatabase(dbModule, matching) {
   }
   console.log(`Inserted ${connections.length} connections.`);
 
-  return { users: users.length, connections: connections.length };
+  // Seed demo cohorts
+  const demoCohorts = [
+    { name: 'Spring Hackathon 2025', description: 'UW-Madison 48-hour hackathon participants', access_code: 'HACK25', organizer_name: 'HackMadison' },
+    { name: 'CS 540 Machine Learning', description: 'Spring semester ML course cohort', access_code: 'CS540S', organizer_name: 'Prof. Zhu' },
+    { name: 'Sellery Hall Floor 3', description: 'New residents — fall move-in', access_code: 'SELL3F', organizer_name: 'RA Team' },
+  ];
+
+  const createdCohorts = [];
+  for (const c of demoCohorts) {
+    try {
+      const cohort = dbModule.createCohort({
+        id: uuidv4(),
+        name: c.name,
+        description: c.description,
+        access_code: c.access_code,
+        organizer_name: c.organizer_name,
+        created_at: new Date().toISOString(),
+      });
+      createdCohorts.push(cohort);
+    } catch (err) {
+      // Cohort may already exist (e.g. access_code unique constraint); fetch it instead
+      const existing = dbModule.getCohortByCode(c.access_code);
+      if (existing) createdCohorts.push(existing);
+    }
+  }
+  console.log(`Inserted ${createdCohorts.length} demo cohorts.`);
+
+  // Assign all 25 users to the first cohort (HACK25)
+  const hack25 = createdCohorts[0];
+  if (hack25) {
+    for (const user of users) {
+      dbModule.addCohortMember(hack25.id, user.id);
+    }
+    console.log(`Assigned all ${users.length} users to cohort "${hack25.name}".`);
+  }
+
+  // Assign 10 random users to CS540S
+  const cs540 = createdCohorts[1];
+  if (cs540) {
+    const shuffled = [...users].sort(() => Math.random() - 0.5).slice(0, 10);
+    for (const user of shuffled) {
+      dbModule.addCohortMember(cs540.id, user.id);
+    }
+    console.log(`Assigned 10 users to cohort "${cs540.name}".`);
+  }
+
+  return { users: users.length, connections: connections.length, cohorts: createdCohorts.length };
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import useStore from '../store.js'
 import { proposeExchange } from '../api.js'
+import SafetyPrompt from './SafetyPrompt.jsx'
 
 // ─── Skill badge ──────────────────────────────────────────────────────────────
 function SkillBadge({ label, type }) {
@@ -27,8 +28,10 @@ function SkillBadge({ label, type }) {
 
 // ─── Single match card ────────────────────────────────────────────────────────
 function MatchCard({ match, currentUser }) {
+  const [showSafety, setShowSafety] = useState(false)
   const [proposing, setProposing] = useState(false)
   const [location, setLocation] = useState('')
+  const [customLocation, setCustomLocation] = useState('')
   const [timeSlot, setTimeSlot] = useState('')
   const [success, setSuccess] = useState(false)
   const [sending, setSending] = useState(false)
@@ -40,12 +43,13 @@ function MatchCard({ match, currentUser }) {
     setSending(true)
     setError(null)
     try {
+      const resolvedLocation = location === 'custom' ? customLocation : location
       await proposeExchange({
         proposer_id: currentUser.id,
         receiver_id: other.id,
         proposer_gives: youGive,
         receiver_gives: theyGive,
-        location: location || undefined,
+        location: resolvedLocation || undefined,
         time_slot: timeSlot || undefined
       })
       setSuccess(true)
@@ -57,9 +61,29 @@ function MatchCard({ match, currentUser }) {
     }
   }
 
+  function handleProposeClick() {
+    const alreadySeen = sessionStorage.getItem('starlink_safety_shown')
+    if (alreadySeen) {
+      setProposing(true)
+    } else {
+      setShowSafety(true)
+    }
+  }
+
+  function handleSafetyConfirm() {
+    sessionStorage.setItem('starlink_safety_shown', '1')
+    setShowSafety(false)
+    setProposing(true)
+  }
+
+  function handleSafetyCancel() {
+    setShowSafety(false)
+  }
+
   function handleCancel() {
     setProposing(false)
     setLocation('')
+    setCustomLocation('')
     setTimeSlot('')
     setError(null)
   }
@@ -187,10 +211,15 @@ function MatchCard({ match, currentUser }) {
         </div>
       )}
 
+      {/* Safety prompt overlay */}
+      {showSafety && (
+        <SafetyPrompt onConfirm={handleSafetyConfirm} onCancel={handleSafetyCancel} />
+      )}
+
       {/* Propose button (not yet proposing, not success) */}
       {!proposing && !success && (
         <button
-          onClick={() => setProposing(true)}
+          onClick={handleProposeClick}
           style={{
             width: '100%',
             padding: '10px',
@@ -218,6 +247,24 @@ function MatchCard({ match, currentUser }) {
           Propose Exchange
         </button>
       )}
+
+      {/* Report concern link */}
+      <div style={{ marginTop: 8, textAlign: 'right' }}>
+        <a
+          href={`mailto:safety@wisc.edu?subject=${encodeURIComponent('StarLink Safety Concern')}`}
+          style={{
+            fontSize: 11,
+            color: 'rgba(255,120,100,0.65)',
+            textDecoration: 'none',
+            fontFamily: 'Inter, sans-serif',
+            transition: 'color 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,120,100,1)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,120,100,0.65)' }}
+        >
+          🚩 Report concern
+        </a>
+      </div>
 
       {/* Inline proposal form */}
       {proposing && !success && (
@@ -258,15 +305,41 @@ function MatchCard({ match, currentUser }) {
 
           <div style={{ marginBottom: 10 }}>
             <label style={labelStyle}>Location</label>
-            <input
-              type="text"
+            <select
               value={location}
-              onChange={e => setLocation(e.target.value)}
-              placeholder="e.g. Memorial Union"
-              style={inputStyle}
+              onChange={e => {
+                setLocation(e.target.value)
+                if (e.target.value !== 'custom') setCustomLocation('')
+              }}
+              style={{
+                ...inputStyle,
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                cursor: 'pointer',
+              }}
               onFocus={e => { e.target.style.borderColor = 'rgba(124,77,255,0.5)' }}
               onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.12)' }}
-            />
+            >
+              <option value="" style={{ background: '#12102a' }}>Choose a location...</option>
+              <option value="Memorial Union Terrace" style={{ background: '#12102a' }}>Memorial Union Terrace</option>
+              <option value="College Library lobby" style={{ background: '#12102a' }}>College Library lobby</option>
+              <option value="Union South atrium" style={{ background: '#12102a' }}>Union South atrium</option>
+              <option value="Grainger Hall lobby" style={{ background: '#12102a' }}>Grainger Hall lobby</option>
+              <option value="Engineering Hall" style={{ background: '#12102a' }}>Engineering Hall</option>
+              <option value="online" style={{ background: '#12102a' }}>Online (video call)</option>
+              <option value="custom" style={{ background: '#12102a' }}>Other (type below)...</option>
+            </select>
+            {location === 'custom' && (
+              <input
+                type="text"
+                value={customLocation}
+                onChange={e => setCustomLocation(e.target.value)}
+                placeholder="Enter location..."
+                style={{ ...inputStyle, marginTop: 6 }}
+                onFocus={e => { e.target.style.borderColor = 'rgba(124,77,255,0.5)' }}
+                onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.12)' }}
+              />
+            )}
           </div>
 
           <div style={{ marginBottom: 12 }}>

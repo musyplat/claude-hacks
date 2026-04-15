@@ -22,20 +22,38 @@ const useStore = create((set, get) => ({
   isLoading: true,
   showCreateForm: false,
   showSkillExchange: false,
+  currentCohort: null,
 
-  loadData: async () => {
+  setCohort: (cohort) => set({ currentCohort: cohort }),
+
+  loadData: async (cohortId) => {
     set({ isLoading: true })
     try {
-      const [users, connections, stats] = await Promise.all([
-        fetchUsers(),
-        fetchConnections(),
-        fetchStats()
-      ])
+      let users, connections, stats
+      if (cohortId) {
+        const [cohortUsers, cohortConnections, statsData] = await Promise.all([
+          fetch(`/api/cohorts/${cohortId}/users`).then(r => r.json()),
+          fetch(`/api/cohorts/${cohortId}/connections`).then(r => r.json()),
+          fetchStats(),
+        ])
+        users = cohortUsers
+        connections = cohortConnections
+        stats = statsData
+      } else {
+        const results = await Promise.all([
+          fetchUsers(),
+          fetchConnections(),
+          fetchStats(),
+        ])
+        users = results[0]
+        connections = results[1]
+        stats = results[2]
+      }
       set({
         users: Array.isArray(users) ? users : [],
         connections: Array.isArray(connections) ? connections : [],
         stats: stats || null,
-        isLoading: false
+        isLoading: false,
       })
     } catch (err) {
       console.error('Failed to load data:', err)

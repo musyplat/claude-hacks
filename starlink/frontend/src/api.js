@@ -31,3 +31,13 @@ export const proposeExchange = (data) =>
 
 export const seedDatabase = () =>
   fetch(`${BASE}/seed`, { method: 'POST' }).then(r => r.json())
+
+export const fetchCohorts = () =>
+  fetch(`${BASE}/cohorts`).then(r => r.json())
+
+export const joinCohort = (access_code, user_id) =>
+  fetch(`${BASE}/cohorts/join`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ access_code, user_id }),
+  }).then(r => r.json())
