@@ -18,8 +18,10 @@ const useStore = create((set, get) => ({
   userConnections: [],
   filterMode: 'all',
   hoveredUserId: null,
+  hoveredLineId: null,
   isLoading: true,
   showCreateForm: false,
+  showSkillExchange: false,
 
   loadData: async () => {
     set({ isLoading: true })
@@ -72,8 +74,16 @@ const useStore = create((set, get) => ({
     set({ hoveredUserId: id })
   },
 
+  setHoveredLine: (id) => {
+    set({ hoveredLineId: id })
+  },
+
   setShowCreateForm: (val) => {
     set({ showCreateForm: val })
+  },
+
+  setShowSkillExchange: (val) => {
+    set({ showSkillExchange: val })
   },
 
   addNewUser: async (userData) => {

@@ -7,11 +7,12 @@ import ConnectionPanel from './components/ConnectionPanel.jsx'
 import StatsOverlay from './components/StatsOverlay.jsx'
 import FilterBar from './components/FilterBar.jsx'
 import CreateStar from './components/CreateStar.jsx'
+import SkillExchange from './components/SkillExchange.jsx'
 
 export default function App() {
   const [showMap, setShowMap] = useState(false)
   const [openCreateOnMap, setOpenCreateOnMap] = useState(false)
-  const { loadData, users, isLoading, showCreateForm, setShowCreateForm } = useStore()
+  const { loadData, users, isLoading, showCreateForm, setShowCreateForm, showSkillExchange } = useStore()
 
   useEffect(() => {
     const init = async () => {
@@ -56,6 +57,9 @@ export default function App() {
       <StatsOverlay />
       <FilterBar />
       <ConnectionPanel />
+
+      {/* Skill Exchange panel */}
+      {showSkillExchange && <SkillExchange />}
 
       {/* Create form modal */}
       {showCreateForm && (
